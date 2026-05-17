@@ -9,25 +9,23 @@
 ## 安装
 
 ```bash
-npx skills add https://github.com/zishutonggao/skills --skill zs-openapi -g -y
+npx skills add https://github.com/zs-openapi/skills --skill zs-openapi -g -y
 ```
 
-## 搜索
+## 使用示例
 
-发布并至少安装一次后，skills.sh 会通过 Skills CLI 的匿名安装遥测收录。可搜索关键词：
+安装后，在 Claude Code、Cursor 或其他支持 Agent Skills 的 IDE 中直接描述你的接入目标：
 
-```bash
-npx skills find zishutonggao
-npx skills find "zishu tonggao"
-npx skills find "紫薯通告"
-npx skills find zsblogger
-npx skills find "openapi webhook"
+```txt
+接入紫薯通告数据同步
+生成一个 Node.js 接收紫薯通告 webhook 的服务
+生成一个 Java Spring Boot 接收紫薯通告 webhook 的服务
+用 ZSK_API_KEY 每 5 分钟增量同步达人到我们的 CRM
+根据紫薯通告 /open-api/* 写一个 TypeScript client
+帮我校验紫薯通告 webhook 的 HMAC-SHA256 签名
 ```
 
-网页入口：
-
-- https://www.skills.sh/
-- https://skills.sh/zishutonggao/skills/zs-openapi
+Skill 会根据场景读取对应 references 和 examples，生成接收端、主动拉 client、增量同步脚本、`.env.example` 与错误处理逻辑。
 
 ## 更新
 
