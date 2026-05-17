@@ -1,12 +1,14 @@
 ---
 name: zs-openapi
-description: 紫薯通告 Zishu Tonggao OpenAPI 一键接入。让 AI 自动生成主动推 webhook 接收端 + 主动拉 REST API client + 增量同步脚本，覆盖 HMAC 签名校验、cursor 分页、错误重试、CLOUD/LOCAL 模式守卫。适用于 zishutonggao、zsblogger、达人数据同步、紫薯通告主动推、紫薯通告主动拉。
+description: 紫薯通告 Zishu Tonggao OpenAPI 一键接入。让 AI 自动生成主动推 webhook 接收端 + 主动拉 REST API client + 达人列表导入脚本 + 增量同步脚本，覆盖 HMAC 签名校验、cursor 分页、错误重试、CLOUD/LOCAL 模式守卫。适用于 zishutonggao、zsblogger、达人数据同步、达人列表同步、紫薯通告主动推、紫薯通告主动拉。
 api-version: "2026.05"
 triggers:
   - 接入紫薯通告
   - 对接紫薯通告 API
   - 紫薯通告主动推
   - 紫薯通告主动拉
+  - 达人列表同步
+  - 企业自有达人列表导入
   - zishutonggao
   - zsblogger
   - 紫薯通告 webhook
@@ -30,15 +32,15 @@ allowed-tools: Read, Write, Edit, Bash
 
 - 自然语言：`接入紫薯通告` / `对接紫薯通告 API` / `紫薯通告主动推` / `紫薯通告主动拉` / `紫薯通告 webhook`
 - 平台短词：`zishutonggao` / `zsblogger`
-- 业务语义：用户提到"达人数据同步到自家系统"、"接收紫薯通告推送"、"调紫薯通告接口拉达人"
+- 业务语义：用户提到"达人数据同步到自家系统"、"接收紫薯通告推送"、"调紫薯通告接口拉达人"、"把 CRM 达人名单导入紫薯"
 
-激活后先识别用户场景（主动推 / 主动拉 / 增量同步），再按第 2 节走对话流程。不要一开始就生成代码——先用第 2 节的问句拿到关键信息。
+激活后先识别用户场景（主动推 / 主动拉 / 达人列表导入 / 增量同步），再按第 2 节走对话流程。不要一开始就生成代码——先用第 2 节的问句拿到关键信息。
 
 ---
 
 ## 2. 对话流程
 
-按用户场景分三条路径。每条路径的「询问步骤」先做完再写代码。
+按用户场景分四条路径。每条路径的「询问步骤」先做完再写代码。
 
 ### 场景 A：主动推 webhook 接收端
 
@@ -96,7 +98,34 @@ allowed-tools: Read, Write, Edit, Bash
 - `.env.example`（含 `ZSK_API_KEY` / `ZS_API_BASE_URL`）
 - 错误处理（401 / 403 / 404 / 429 / 500 分别给建议日志或重试逻辑）
 
-### 场景 C：增量同步脚本
+### 场景 C：达人列表导入
+
+用户说「把企业自有达人列表同步到紫薯」/「导入达人名单」/「CRM 写入紫薯达人库」时走这条。
+
+前置守卫：同场景 B（必须 CLOUD）。
+
+询问清单：
+
+1. 技术栈：Node.js TypeScript、Python，还是 Java + Spring Boot？
+2. 输入来源：CRM API、数据库查询、Excel/CSV，还是固定 JSON？
+3. 是否已有 `platformBloggerId`？如果没有，必须提供 `platform + url`，由紫薯按平台规则解析。
+4. 是否需要停用/归档接口？
+
+读哪些文件：
+
+- `references/api-reference.md`（达人列表导入接口）
+- `references/platforms.md`（platform enum 6 个值 + URL host 归类规则）
+- Java 选 `examples/import-bloggers-java.java`
+
+生成内容：
+
+- 调 `POST /open-api/bloggers/batch` 的导入脚本，单批最多 500 条
+- Header 带 `X-API-Key`，并生成稳定 `Idempotency-Key`
+- 最小 item 为 `{ "platform": "PGY", "url": "https://..." }`
+- `PGY` URL 支持蒲公英链接、小红书主页链接和 `xhslink.com` 短链
+- `priceJson` / `rawData` 保持结构化对象，不合并成大字符串
+
+### 场景 D：增量同步脚本
 
 用户说「每 X 分钟同步达人」/「增量拉」/「把变更的达人落到我们库」时走这条。
 

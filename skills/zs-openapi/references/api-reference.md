@@ -1,6 +1,6 @@
 # 紫薯通告 `/open-api/*` 接口参考
 
-本期 10 个接口完整字段表。所有接口共用：
+本期接口完整字段表。所有接口共用：
 
 - **Base URL（生产）**：`https://api.zishutonggao.com`
 - **鉴权 header**：`X-API-Key: <ZSK_API_KEY>`（企业级）
@@ -9,6 +9,83 @@
 - **限流**：单 ApiKey 60 req/min，响应头 `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset`，超额 `429 + Retry-After`
 - **OpenAPI spec**：`GET https://api.zishutonggao.com/open-api/openapi.json`
 - **平台 enum 6 个值**（`STARMAP` / `PGY` / `VIDEO_HUXUAN` / `MP_HUXUAN` / `BILIBILI_HUAHUO` / `KUAISHOU_JLJX`）与中文 / URL host 对照表见 [`platforms.md`](./platforms.md)
+
+---
+
+## 达人列表导入：`POST /open-api/bloggers/batch`
+
+企业自有系统把达人名单写入紫薯通告企业达人库。导入后可参与后续采集，缺失字段会在首次采集后回填。
+
+**Header**
+
+| Header | 必填 | 说明 |
+|--------|------|------|
+| `X-API-Key` | 是 | 企业 API Key，需要 `blogger:write` 权限 |
+| `Idempotency-Key` | 否 | 建议填写稳定批次键；相同 key + 相同请求体会返回同一 run |
+
+**请求示例**
+
+```json
+{
+  "sourceSystem": "brand-crm",
+  "items": [
+    {
+      "platform": "PGY",
+      "url": "https://www.xiaohongshu.com/user/profile/5fa1...",
+      "externalId": "crm_123",
+      "tags": ["美妆", "护肤"],
+      "priceJson": {
+        "imageText": 5000,
+        "video": 12000
+      },
+      "rawData": {
+        "source": "crm"
+      }
+    }
+  ]
+}
+```
+
+规则：
+
+- 单批最多 500 条。
+- 最小 item 只要求 `platform + url`；`platformBloggerId` 可选。
+- `PGY` 支持蒲公英链接、小红书主页链接和 `xhslink.com` 短链。
+- 短链会先展开再解析；展开失败且未传 `platformBloggerId` 时返回行级错误。
+- `priceJson` / `rawData` 必须保持结构化对象，不合并成大字符串。
+
+**响应示例**
+
+```json
+{
+  "code": 200,
+  "data": {
+    "runId": "oir_xxx",
+    "total": 100,
+    "created": 20,
+    "updated": 75,
+    "failed": 5,
+    "discardedFieldsByPlatform": {
+      "PGY": ["unsupportedField"]
+    },
+    "errors": [
+      {
+        "index": 3,
+        "platform": "PGY",
+        "code": "SHORT_URL_EXPAND_FAILED",
+        "message": "短链展开失败，请提供 platformBloggerId 或改传达人主页长链接"
+      }
+    ]
+  }
+}
+```
+
+相关接口：
+
+- `POST /open-api/bloggers`：单条导入，body 即单个 item。
+- `POST /open-api/bloggers/deactivate`：停用/归档达人，不物理删除。
+- `GET /open-api/import-runs`：导入批次列表。
+- `GET /open-api/import-runs/:id`：导入批次详情。
 
 ---
 
