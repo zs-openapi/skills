@@ -40,4 +40,6 @@ npx skills update
 
 ## 反馈
 
-zoho.allen@gmail.com
+请在 GitHub Issues 提交接入问题、字段建议或示例代码改进：
+
+https://github.com/zs-openapi/skills/issues

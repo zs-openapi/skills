@@ -184,4 +184,4 @@ allowed-tools: Read, Write, Edit, Bash
 
 - frontmatter `api-version` 对应后端 `/open-api/openapi.json` 的 spec 版本
 - 主动推 Blogger JSON 字段只增不删：新字段追加到末尾，老字段不删不改语义
-- 用户反馈：zoho.allen@gmail.com
+- 用户反馈：https://github.com/zs-openapi/skills/issues
